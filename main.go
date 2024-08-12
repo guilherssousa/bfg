@@ -84,33 +84,33 @@ func CompileBrainfuck(instructions []byte) (program []Instruction, error error) 
 
 func RunBrainfuck(instructions []Instruction) {
 	tape := make([]int8, TAPE_MAX_SIZE)
-	var ptr uint8 = 0
+	var head uint8 = 0
 
 	for pc := 0; pc < len(instructions); pc++ {
 		i := instructions[pc]
 
 		if DEBUG {
-			fmt.Printf("PC: %d\t OP: %d\tOPD: %d\n", pc, i.operator, i.operand)
+			fmt.Printf("PC: %d\t H: %d\t V: %d\t OP: %d\tOPD: %d\n", pc, head, tape[head], i.operator, i.operand)
 		}
 
 		switch i.operator {
 		case BF_OP_MOVE_RIGHT:
-			ptr++
+			head++
 		case BF_OP_MOVE_LEFT:
-			ptr--
+			head--
 		case BF_OP_INCREMENT:
-			tape[ptr]++
+			tape[head]++
 		case BF_OP_DECREMENT:
-			tape[ptr]--
+			tape[head]--
 		case BF_OP_WRITE:
-			fmt.Printf("%c", tape[ptr])
+			fmt.Printf("%c", tape[head])
 		case BF_OP_READ:
 		case BF_OP_JUMP_IF_ZERO:
-			if tape[ptr] == 0 {
+			if tape[head] == 0 {
 				pc = int(i.operand)
 			}
 		case BF_OP_JUMP_UNLESS_ZERO:
-			if tape[ptr] != 0 {
+			if tape[head] != 0 {
 				pc = int(i.operand)
 			}
 		default:
@@ -138,5 +138,8 @@ func main() {
 		return
 	}
 
+	if DEBUG {
+		fmt.Println("Running on debug mode")
+	}
 	RunBrainfuck(program)
 }

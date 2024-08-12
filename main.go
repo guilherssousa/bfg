@@ -57,15 +57,15 @@ func CompileBrainfuck(instructions []byte) (program []Instruction, error error) 
 			// If stack is clear, it means ] does not have a correspondent
 			// ] instruction.
 			if len(stack) == 0 {
-				return nil, fmt.Errorf("Error on parsing index %d: Stack is clear", index)
+				return nil, errors.New(fmt.Sprintf("\n\tindex %d: Stack is clear", index))
 			}
 
-			jmp_pc := stack[len(stack)-1]
+			sp = stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
-			program = append(program, Instruction{BF_OP_JUMP_UNLESS_ZERO, jmp_pc})
+			program = append(program, Instruction{BF_OP_JUMP_UNLESS_ZERO, sp})
 
 			// Add current PC to correspondent JMP instruction
-			program[jmp_pc].operand = pc
+			program[sp].operand = pc
 			break
 		default:
 			pc--
@@ -75,7 +75,7 @@ func CompileBrainfuck(instructions []byte) (program []Instruction, error error) 
 
 	// If stack is not clear, then a error happened.
 	if len(stack) != 0 {
-		return nil, fmt.Errorf("Stack is %d", len(stack))
+		return nil, errors.New(fmt.Sprintf("\n\tStack is not empty at index %d", len(stack)))
 	}
 
 	return
@@ -90,7 +90,17 @@ func main() {
 
 	file, err := os.ReadFile(args[1])
 	if err != nil {
-		panic(fmt.Sprint("Error on reading file:", err))
+		fmt.Printf("Error on reading file: %d\n", err)
+		return
 	}
 
+	program, err := CompileBrainfuck(file)
+	if err != nil {
+		fmt.Printf("An error occured: %d", err)
+		return
+	}
+
+	for index, instruction := range program {
+		fmt.Printf("%d: %d\t %d\n", index, instruction.operator, instruction.operand)
+	}
 }

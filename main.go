@@ -7,12 +7,13 @@ import (
 )
 
 type Instruction struct {
-	operator int
-	operand  int
+	operator uint8
+	operand  uint8
 }
 
 const TAPE_MAX_SIZE = 4 * 1024
 const STACK_MAX_SIZE = 512
+const DEBUG = false
 
 const (
 	BF_OP_MOVE_RIGHT = iota
@@ -26,8 +27,8 @@ const (
 )
 
 func CompileBrainfuck(instructions []byte) (program []Instruction, error error) {
-	var pc, sp int = 0, 0
-	var stack = []int{}
+	var pc, sp uint8 = 0, 0
+	var stack = []uint8{}
 
 	for index, op := range instructions {
 		switch op {
@@ -81,6 +82,43 @@ func CompileBrainfuck(instructions []byte) (program []Instruction, error error) 
 	return
 }
 
+func RunBrainfuck(instructions []Instruction) {
+	tape := make([]int8, TAPE_MAX_SIZE)
+	var ptr uint8 = 0
+
+	for pc := 0; pc < len(instructions); pc++ {
+		i := instructions[pc]
+
+		if DEBUG {
+			fmt.Printf("PC: %d\t OP: %d\tOPD: %d\n", pc, i.operator, i.operand)
+		}
+
+		switch i.operator {
+		case BF_OP_MOVE_RIGHT:
+			ptr++
+		case BF_OP_MOVE_LEFT:
+			ptr--
+		case BF_OP_INCREMENT:
+			tape[ptr]++
+		case BF_OP_DECREMENT:
+			tape[ptr]--
+		case BF_OP_WRITE:
+			fmt.Printf("%c", tape[ptr])
+		case BF_OP_READ:
+		case BF_OP_JUMP_IF_ZERO:
+			if tape[ptr] == 0 {
+				pc = int(i.operand)
+			}
+		case BF_OP_JUMP_UNLESS_ZERO:
+			if tape[ptr] != 0 {
+				pc = int(i.operand)
+			}
+		default:
+			panic("Unknown operator")
+		}
+	}
+}
+
 func main() {
 	args := os.Args
 
@@ -100,7 +138,5 @@ func main() {
 		return
 	}
 
-	for index, instruction := range program {
-		fmt.Printf("%d: %d\t %d\n", index, instruction.operator, instruction.operand)
-	}
+	RunBrainfuck(program)
 }

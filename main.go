@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -13,18 +14,29 @@ type Instruction struct {
 
 const TAPE_MAX_SIZE = 4 * 1024
 const STACK_MAX_SIZE = 512
-const DEBUG = false
 
 const (
 	BF_OP_MOVE_RIGHT = iota
 	BF_OP_MOVE_LEFT
 	BF_OP_INCREMENT
 	BF_OP_DECREMENT
+
 	BF_OP_WRITE
 	BF_OP_READ
 	BF_OP_JUMP_IF_ZERO
 	BF_OP_JUMP_UNLESS_ZERO
 )
+
+var DEBUG_INSTRUCTION_NAMES = map[uint8]string{
+	BF_OP_MOVE_RIGHT:       "MOVE_RIGHT",
+	BF_OP_MOVE_LEFT:        "MOVE_LEFT",
+	BF_OP_INCREMENT:        "INCREMENT",
+	BF_OP_DECREMENT:        "DECREMENT",
+	BF_OP_WRITE:            "WRITE",
+	BF_OP_READ:             "READ",
+	BF_OP_JUMP_IF_ZERO:     "JUMP_IF_ZERO",
+	BF_OP_JUMP_UNLESS_ZERO: "JUMP_UNLESS_ZERO",
+}
 
 func CompileBrainfuck(instructions []byte) (program []Instruction, error error) {
 	var pc, sp uint8 = 0, 0
@@ -82,15 +94,38 @@ func CompileBrainfuck(instructions []byte) (program []Instruction, error error) 
 	return
 }
 
-func RunBrainfuck(instructions []Instruction) {
+func RunBrainfuck(instructions []Instruction, debug bool) {
 	tape := make([]int8, TAPE_MAX_SIZE)
 	var head uint8 = 0
 
 	for pc := 0; pc < len(instructions); pc++ {
 		i := instructions[pc]
 
-		if DEBUG {
-			fmt.Printf("PC: %d\t H: %d\t V: %d\t OP: %d\tOPD: %d\n", pc, head, tape[head], i.operator, i.operand)
+		if debug {
+			var sample_start int
+			var sample_end int
+
+			if int(head)-7 < 0 {
+				sample_start = 0
+				sample_end = 15
+			} else {
+				sample_start = int(head) - 7
+				sample_end = int(head) + 8
+			}
+
+			fmt.Printf("\nHead: %d\tPC: %d\t\n", head, pc)
+			for dI := sample_start; dI < sample_end; dI++ {
+				if dI == int(head) {
+					fmt.Printf("[ >%d ] ", tape[dI])
+				} else {
+					fmt.Printf("[ %d ] ", tape[dI])
+				}
+			}
+			fmt.Printf("\nCurrent Instruction: %s\n", DEBUG_INSTRUCTION_NAMES[i.operator])
+
+			// Block until input
+			input := bufio.NewScanner(os.Stdin)
+			input.Scan()
 		}
 
 		switch i.operator {
@@ -121,6 +156,7 @@ func RunBrainfuck(instructions []Instruction) {
 
 func main() {
 	args := os.Args
+	debug := os.Getenv("DEBUG") == "true"
 
 	if len(args) < 2 {
 		panic(fmt.Sprintf("Usage: %s <rom-file>\n", os.Args[0]))
@@ -138,8 +174,8 @@ func main() {
 		return
 	}
 
-	if DEBUG {
+	if debug {
 		fmt.Println("Running on debug mode")
 	}
-	RunBrainfuck(program)
+	RunBrainfuck(program, debug)
 }

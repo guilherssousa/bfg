@@ -2,6 +2,12 @@
 
 `bfg` is a Brainfuck interpreter in Go.
 
+# Usage
+
+```bash
+bfg <path-to-file>
+```
+
 # Dependencies
 
 - Go 1.20
